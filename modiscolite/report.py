@@ -17,14 +17,16 @@ pd.options.display.max_colwidth = 500
 
 def read_meme(filename):
 	motifs = {}
+	motif_names = {}
 
 	with open(filename, "r") as infile:
-		motif, width, i = None, None, 0
+		motif, name, width, i = None, None, None, 0
 
 		for line in infile:
 			if motif is None:
 				if line[:5] == 'MOTIF':
 					motif = line.split()[1]
+					name = line.split()[2]
 				else:
 					continue
 
@@ -39,9 +41,10 @@ def read_meme(filename):
 
 			else:
 				motifs[motif] = pwm
-				motif, width, i = None, None, 0
+				motif_names[motif] = name
+				motif, name, width, i = None, None, None, 0
 
-	return motifs
+	return motifs, motif_names
 
 
 def compute_per_position_ic(ppm, background, pseudocount):
@@ -226,7 +229,7 @@ def report_motifs(modisco_h5py, output_dir, meme_motif_db, suffix='./',
 		os.mkdir(output_dir + '/trimmed_logos/')
 	modisco_logo_dir = output_dir + '/trimmed_logos/'
 
-	motifs = read_meme(meme_motif_db)
+	motifs, motif_names = read_meme(meme_motif_db)
 	names = create_modisco_logos(modisco_h5py, modisco_logo_dir, trim_threshold)
 
 	tomtom_df = run_tomtom(modisco_h5py, output_dir, meme_motif_db, 
@@ -237,6 +240,8 @@ def report_motifs(modisco_h5py, output_dir, meme_motif_db, suffix='./',
 	tomtom_df['modisco_cwm_rev'] = ['{}trimmed_logos/{}.cwm.rev.png'.format(suffix, name) for name in names]
 
 	reordered_columns = ['pattern', 'num_seqlets', 'modisco_cwm_fwd', 'modisco_cwm_rev']
+	tomtom_matches_funcs = {}
+	format_motif_name = lambda motif: '{}_{}'.format(motif_names[motif], motif)
 	for i in range(top_n_matches):
 		name = "match{}".format(i)
 		logos = []
@@ -253,10 +258,11 @@ def report_motifs(modisco_h5py, output_dir, meme_motif_db, suffix='./',
 
 		tomtom_df["{}_logo".format(name)] = logos
 		reordered_columns.extend([name, 'qval{}'.format(i), "{}_logo".format(name)])
+		tomtom_matches_funcs["{}_logo".format(name)] = path_to_image_html
+		tomtom_matches_funcs[name] = format_motif_name
 
 	tomtom_df = tomtom_df[reordered_columns]
 	tomtom_df.to_html(open('{}/motifs.html'.format(output_dir), 'w'),
 		escape=False, formatters=dict(modisco_cwm_fwd=path_to_image_html,
-			modisco_cwm_rev=path_to_image_html, match0_logo=path_to_image_html,
-			match1_logo=path_to_image_html, match2_logo=path_to_image_html), 
+			modisco_cwm_rev=path_to_image_html, **tomtom_matches_funcs), 
 		index=False)
