@@ -165,7 +165,13 @@ def _plot_weights(array, path, figsize=(10,3), **kwargs):
 	df.index.name = 'pos'
 	df.to_csv(path + '.txt', header=True, index=False, sep="\t")
 
-	crp_logo = logomaker.Logo(df, ax=ax)
+	crp_logo = logomaker.Logo(df, ax=ax, 
+                           color_scheme={
+    						    'G': [1, .65, 0],
+    						    'TU': [0, .5, 0],
+    						    'C': [0, 0, 1],
+    						    'A': [1, 0, 0]
+    						})
 	crp_logo.style_spines(visible=False)
 	plt.ylim(min(df.sum(axis=1).min(), 0), df.sum(axis=1).max())
 
