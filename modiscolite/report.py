@@ -163,12 +163,13 @@ def _plot_weights(array, path, figsize=(10,3), **kwargs):
 
 	df = pandas.DataFrame(array, columns=['A', 'C', 'G', 'T'])
 	df.index.name = 'pos'
+	df.to_csv(path + '.txt', header=True, index=False, sep="\t")
 
 	crp_logo = logomaker.Logo(df, ax=ax)
 	crp_logo.style_spines(visible=False)
 	plt.ylim(min(df.sum(axis=1).min(), 0), df.sum(axis=1).max())
 
-	plt.savefig(path)
+	plt.savefig(path + '.png')
 	plt.close()
 	
 def make_logo(match, logo_dir, motifs):
@@ -179,7 +180,7 @@ def make_logo(match, logo_dir, motifs):
 	ppm = motifs[match]
 	ic = compute_per_position_ic(ppm, background, 0.001)
 
-	_plot_weights(ppm*ic[:, None], path='{}/{}.png'.format(logo_dir, match))
+	_plot_weights(ppm*ic[:, None], path='{}/{}'.format(logo_dir, match))
 		
 
 def create_modisco_logos(modisco_file, modisco_logo_dir, trim_threshold):
@@ -214,8 +215,9 @@ def create_modisco_logos(modisco_file, modisco_logo_dir, trim_threshold):
 			trimmed_cwm_fwd = cwm_fwd[start_fwd:end_fwd]
 			trimmed_cwm_rev = cwm_rev[start_rev:end_rev]
 
-			_plot_weights(trimmed_cwm_fwd, path='{}/{}.cwm.fwd.png'.format(modisco_logo_dir, tag))
-			_plot_weights(trimmed_cwm_rev, path='{}/{}.cwm.rev.png'.format(modisco_logo_dir, tag))
+
+			_plot_weights(trimmed_cwm_fwd, path='{}/{}.cwm.fwd'.format(modisco_logo_dir, tag))
+			_plot_weights(trimmed_cwm_rev, path='{}/{}.cwm.rev'.format(modisco_logo_dir, tag))
 
 	return tags
 
